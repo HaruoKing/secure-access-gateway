@@ -1,2 +1,6 @@
-# secure-access-gateway
-A security-first API gateway implementing Zero Trust access controls such as JWT validation, scope enforcement, rate limiting, IP filtering, and audit logging.
+# Secure Access Gateway (SAG)
+
+A security-first API gateway designed to enforce Zero Trust access controls in front of backend services.
+
+## Status
+🚧 Initial repository scaffolding. No application code yet.
