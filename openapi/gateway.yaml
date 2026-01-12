@@ -1,5 +1,158 @@
 openapi: 3.0.3
+
 info:
   title: Secure Access Gateway API
+  description: >
+    Security-first API gateway that enforces Zero Trust access controls including
+    JWT validation, scope-based authorization, rate limiting, IP filtering,
+    request integrity checks, and audit logging.
   version: 0.1.0
-paths: {}
+
+servers:
+  - url: https://gateway.example.com
+    description: Production Gateway
+  - url: http://localhost:8080
+    description: Local Development
+
+tags:
+  - name: Gateway
+    description: Protected gateway endpoints
+  - name: Health
+    description: Gateway health and diagnostics
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Bearer JWT issued by an external identity provider.
+        The gateway validates the token but does not issue it.
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: forbidden
+        message:
+          type: string
+          example: Missing required scope
+
+    AuditDecision:
+      type: string
+      enum:
+        - ALLOW
+        - DENY
+
+    AuditEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        sourceIp:
+          type: string
+          example: 192.168.1.10
+        endpoint:
+          type: string
+          example: /api/data
+        decision:
+          $ref: '#/components/schemas/AuditDecision'
+        reason:
+          type: string
+          example: missing_scope:data:write
+
+  responses:
+    Unauthorized:
+      description: Unauthorized request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+paths:
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Gateway health check
+      description: Returns gateway availability status.
+      responses:
+        '200':
+          description: Gateway is healthy
+
+  /api/data:
+    get:
+      tags:
+        - Gateway
+      summary: Read protected data
+      description: Requires read scope.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request authorized
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    post:
+      tags:
+        - Gateway
+      summary: Write protected data
+      description: Requires write scope.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request authorized
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    delete:
+      tags:
+        - Gateway
+      summary: Administrative delete operation
+      description: Requires admin scope.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request authorized
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+security:
+  - BearerAuth: []
