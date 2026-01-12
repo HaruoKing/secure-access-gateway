@@ -1,64 +1,135 @@
-## Security Controls
+# Secure Access Gateway (SAG)
 
-The Secure Access Gateway (SAG) enforces multiple layered security controls based on **Zero Trust** and **defense-in-depth** principles.  
-All requests are treated as untrusted until explicitly validated and authorized.
+A **security-first API gateway** designed to enforce Zero Trust access controls in front of backend services.
+
+This project focuses on **authentication validation, authorization enforcement, abuse prevention, request integrity, and auditability**.  
+It is intentionally designed as a **policy enforcement point**, not an identity provider.
+
+---
+
+## Project Status
+
+✅ Repository scaffolding complete  
+✅ Threat model documented  
+✅ Architecture documented  
+✅ OpenAPI specification defined  
+🚧 Implementation pending
+
+No application code has been written yet.
+
+---
+
+## Project Goals
+
+- Enforce JWT-based access validation
+- Apply scope-based authorization per endpoint
+- Prevent abuse via rate limiting and IP filtering
+- Detect and block replayed or tampered requests
+- Provide security-grade audit logs for every decision
+- Centralize security logic outside of backend services
+
+---
+
+## What This Project Is
+
+- A **Zero Trust access gateway**
+- A **security policy enforcement layer**
+- A **defense-in-depth architecture showcase**
+- A **cybersecurity-focused portfolio project**
+
+---
+
+## What This Project Is Not
+
+- An OAuth provider
+- A user authentication system
+- A production-ready gateway
+- A cloud-managed security service
+
+---
+
+## High-Level Architecture
+
+```mermaid
+flowchart LR
+    Client["External Client"]
+    Gateway["Secure Access Gateway"]
+    Backend["Protected Backend Service"]
+    Audit["Audit Log Storage"]
+
+    Client -->|HTTPS Requests| Gateway
+    Gateway -->|Authorized Requests| Backend
+    Gateway -->|Security Events| Audit
+```
+
+All trust transitions occur at the gateway.
+
+---
+
+## Request Lifecycle
+
+```mermaid
+flowchart TD
+    Request["Incoming Request"]
+    IP["IP Security"]
+    Rate["Rate Limiting"]
+    JWT["JWT Validation"]
+    Scope["Scope Enforcement"]
+    Sig["Request Signature Validation"]
+    Audit["Audit Logging"]
+    Forward["Forward to Backend"]
+
+    Request --> IP --> Rate --> JWT --> Scope --> Sig --> Audit --> Forward
+```
+
+Requests failing at any stage are rejected immediately and logged.
+
+---
+
+## Security Controls
 
 ### Authentication Validation
 - Requires a valid **Bearer JWT** on protected endpoints
 - Verifies token signature, issuer, audience, and expiration
-- Tokens are **validated only** (not issued) by the gateway
+- Tokens are validated only (not issued) by the gateway
 
-**Threats mitigated:**
-- Unauthorized access
-- Token forgery
-- Expired or tampered tokens
+**Mitigates:** unauthorized access, token forgery
 
 ---
 
 ### Authorization (Scope Enforcement)
-- Each endpoint is mapped to one or more required scopes
-- Requests lacking required scopes are denied by default
-- Authorization decisions are enforced centrally at the gateway
+- Each endpoint requires explicit scopes
+- Missing scopes result in immediate denial
+- Authorization is enforced centrally
 
-**Threats mitigated:**
-- Privilege escalation
-- Over-broad access
-- Improper authorization logic in backend services
+**Mitigates:** privilege escalation, over-broad access
 
 ---
 
 ### Rate Limiting
-- Enforced per IP address and per token subject
-- Uses a sliding time window model
-- Violations result in immediate request denial
+- Enforced per IP and per token subject
+- Sliding window rate limiting model
+- Violations return `429 Too Many Requests`
 
-**Threats mitigated:**
-- Brute force attacks
-- API scraping
-- Denial-of-service amplification
+**Mitigates:** brute force attacks, API scraping
 
 ---
 
 ### IP Filtering
-- Supports explicit allowlists and denylists
-- Deny rules take precedence over allow rules
-- Executed early in the request lifecycle
+- Explicit allowlists and denylists
+- Deny rules override allow rules
+- Executed early in request processing
 
-**Threats mitigated:**
-- Known malicious sources
-- Unauthorized network access
+**Mitigates:** known malicious sources
 
 ---
 
 ### Request Integrity & Replay Protection
 - Optional HMAC-based request signatures
-- Timestamp validation to prevent replay attacks
-- Requests outside the allowed time window are rejected
+- Timestamp validation to prevent replays
+- Requests outside allowed window are rejected
 
-**Threats mitigated:**
-- Replay attacks
-- Message tampering
-- Man-in-the-middle reuse of captured requests
+**Mitigates:** replay attacks, request tampering
 
 ---
 
@@ -66,33 +137,100 @@ All requests are treated as untrusted until explicitly validated and authorized.
 - Every request is logged with:
   - Timestamp
   - Source IP
-  - Target endpoint
-  - Authorization decision (ALLOW / DENY)
+  - Endpoint
+  - Decision (ALLOW / DENY)
   - Reason for decision
-- Logs are append-only and designed for forensic analysis
+- Logs are append-only
 
-**Threats mitigated:**
-- Undetected abuse
-- Insider misuse
-- Lack of accountability
+**Mitigates:** undetected abuse, insider misuse
 
 ---
 
 ### Secure Failure Handling
-- All failures are explicit and deterministic
-- No sensitive information is leaked in error responses
-- Common failure responses:
+- Explicit failure responses
+- No sensitive data in error messages
+- Common responses:
   - `401 Unauthorized`
   - `403 Forbidden`
   - `429 Too Many Requests`
 
-**Threats mitigated:**
-- Information disclosure
-- Undefined or unsafe error behavior
+---
+
+## Threat Model
+
+Threats are documented in detail in [`docs/threat-model.md`](docs/threat-model.md).
+
+Key threat categories:
+- Unauthorized access
+- Privilege escalation
+- Token replay
+- API abuse
+- Insider misuse
 
 ---
 
-### Security Philosophy
+## OpenAPI Specification
 
-The Secure Access Gateway acts as a **policy enforcement point**, not an identity provider.  
-All security decisions are centralized, explicit, logged, and enforce least privilege by default.
+The full OpenAPI 3.0.3 specification is available at:
+
+```
+openapi/gateway.yaml
+```
+
+It defines:
+- Security schemes
+- Required authorization scopes
+- Error response models
+
+---
+
+## Repository Structure
+
+```
+secure-access-gateway/
+├── .github/
+│   └── workflows/
+├── docker/
+├── docs/
+│   ├── architecture.md
+│   └── threat-model.md
+├── openapi/
+│   └── gateway.yaml
+├── src/
+├── README.md
+└── .gitignore
+```
+
+---
+
+## Design Principles
+
+- Zero Trust by default
+- Least privilege enforcement
+- Explicit deny behavior
+- Centralized security logic
+- Observability over opacity
+
+---
+
+## Future Enhancements
+
+- Mutual TLS (mTLS) between gateway and backend
+- External SIEM integration
+- Distributed rate limiting
+- Multi-tenant policy enforcement
+- Admin security dashboard
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Summary
+
+The Secure Access Gateway demonstrates how **modern API security controls** can be implemented cleanly and intentionally without coupling security logic to application code.
+
+This project is designed to showcase **security architecture, threat modeling, and defensive system design** rather than feature completeness.
