@@ -9,10 +9,18 @@ struct DataController: RouteCollection {
         let protected = api.grouped(JWTValidationMiddleware())
         let data = protected.grouped("data")
 
-        // Register route handlers
-        data.get(use: read)
-        data.post(use: write)
-        data.delete(use: delete)
+        // Apply scope-based authorization to each endpoint
+        // GET /api/data requires "data:read" scope
+        data.grouped(ScopeAuthorizationMiddleware(requiredScope: "data:read"))
+            .get(use: read)
+
+        // POST /api/data requires "data:write" scope
+        data.grouped(ScopeAuthorizationMiddleware(requiredScope: "data:write"))
+            .post(use: write)
+
+        // DELETE /api/data requires "admin" scope
+        data.grouped(ScopeAuthorizationMiddleware(requiredScope: "admin"))
+            .delete(use: delete)
     }
 
     /// GET /api/data - Read protected data

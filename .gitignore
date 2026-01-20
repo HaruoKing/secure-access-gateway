@@ -5,3 +5,4 @@ Packages/
 .env
 *.sqlite
 .claude/
+generate_tokens.py
