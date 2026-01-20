@@ -4,3 +4,4 @@ Packages/
 .swiftpm/
 .env
 *.sqlite
+.claude/
